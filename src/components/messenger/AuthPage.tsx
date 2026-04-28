@@ -15,13 +15,12 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
 
     if (mode === 'login') {
-      const result = login(username, password);
+      const result = await login(username, password);
       if (!result.success) setError(result.error || '');
     } else {
-      const result = register(username, displayName, password);
+      const result = await register(username, displayName, password);
       if (!result.success) setError(result.error || '');
     }
     setLoading(false);

@@ -1,66 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMessengerStore } from '@/store/messengerStore';
 import { useAuthStore } from '@/store/authStore';
-import { Message } from '@/types/messenger';
 import Icon from '@/components/ui/icon';
-
-const DEMO_MESSAGES: Record<string, Message[]> = {
-  'chat-1': [
-    { id: 'm1-1', chatId: 'chat-1', senderId: '1', text: 'Привет! Как дела?', createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(), isRead: true },
-    { id: 'm1-2', chatId: 'chat-1', senderId: 'me', text: 'Всё отлично, спасибо! Работаю над новым проектом', createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(), isRead: true },
-    { id: 'm1-3', chatId: 'chat-1', senderId: '1', text: 'Звучит интересно! Расскажи подробнее', createdAt: new Date(Date.now() - 1000 * 60 * 6).toISOString(), isRead: true },
-    { id: 'm1-4', chatId: 'chat-1', senderId: '1', text: 'Привет! Как дела?', createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), isRead: false },
-  ],
-  'chat-2': [
-    { id: 'm2-1', chatId: 'chat-2', senderId: '2', text: 'Встретимся завтра?', createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(), isRead: true },
-    { id: 'm2-2', chatId: 'chat-2', senderId: 'me', text: 'Договорились, увидимся завтра', createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), isRead: true },
-  ],
-  'chat-3': [
-    { id: 'm3-1', chatId: 'chat-3', senderId: '1', text: 'Всем привет! Не забудьте про встречу', createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), isRead: true },
-    { id: 'm3-2', chatId: 'chat-3', senderId: '2', text: 'Буду', createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), isRead: true },
-    { id: 'm3-3', chatId: 'chat-3', senderId: '3', text: 'Встреча в 15:00 не забудьте!', createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), isRead: false },
-  ],
-};
 
 function formatMsgTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
 }
 
 export default function ChatWindow() {
-  const { chats, activeChat, sendMessage } = useMessengerStore();
+  const { chats, activeChat, sendMessage, messagesMap } = useMessengerStore();
   const { currentUser } = useAuthStore();
   const [text, setText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const chat = chats.find((c) => c.id === activeChat);
   const other = chat?.type === 'direct'
     ? chat.participants.find((p) => p.id !== currentUser?.id)
     : null;
-
-  useEffect(() => {
-    if (activeChat) {
-      setMessages(DEMO_MESSAGES[activeChat] || []);
-    }
-  }, [activeChat]);
+  const messages = activeChat ? (messagesMap[activeChat] || []) : [];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages.length]);
 
-  const handleSend = () => {
-    if (!text.trim() || !activeChat || !currentUser) return;
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      chatId: activeChat,
-      senderId: currentUser.id,
-      text: text.trim(),
-      createdAt: new Date().toISOString(),
-      isRead: false,
-    };
-    setMessages((prev) => [...prev, newMsg]);
-    sendMessage(activeChat, currentUser.id, text.trim());
+  const handleSend = async () => {
+    if (!text.trim() || !activeChat || !currentUser || sending) return;
+    const msg = text.trim();
     setText('');
+    setSending(true);
+    await sendMessage(activeChat, currentUser.id, msg);
+    setSending(false);
   };
 
   const handleKey = (e: React.KeyboardEvent) => {
@@ -115,6 +85,11 @@ export default function ChatWindow() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+        {messages.length === 0 && (
+          <div className="text-center py-12 text-[hsl(220,10%,35%)] text-sm">
+            Начните диалог — напишите первое сообщение
+          </div>
+        )}
         {messages.map((msg, i) => {
           const isMe = msg.senderId === currentUser?.id;
           const sender = chat.participants.find((p) => p.id === msg.senderId);
@@ -174,10 +149,13 @@ export default function ChatWindow() {
           </div>
           <button
             onClick={handleSend}
-            disabled={!text.trim()}
+            disabled={!text.trim() || sending}
             className="w-9 h-9 rounded-xl bg-[hsl(var(--primary))] hover:bg-blue-500 flex items-center justify-center transition-all duration-150 flex-shrink-0 disabled:opacity-30 hover:shadow-md hover:shadow-blue-500/25"
           >
-            <Icon name="Send" size={16} className="text-white" />
+            {sending
+              ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : <Icon name="Send" size={16} className="text-white" />
+            }
           </button>
         </div>
       </div>

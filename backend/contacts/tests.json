@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Search users",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "search", "query": "test", "exclude_id": "0"},
+      "expectedStatus": 200,
+      "expectedBody": {"users": []},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

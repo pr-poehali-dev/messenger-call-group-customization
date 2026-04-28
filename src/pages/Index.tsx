@@ -14,14 +14,15 @@ type Tab = 'chats' | 'contacts' | 'calls' | 'profile' | 'settings';
 
 export default function Index() {
   const { isAuthenticated, currentUser } = useAuthStore();
-  const { initDemoData } = useMessengerStore();
+  const { loadChats, loadCalls } = useMessengerStore();
   const [activeTab, setActiveTab] = useState<Tab>('chats');
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      initDemoData(currentUser.id);
+      loadChats(currentUser.id);
+      loadCalls(currentUser.id);
     }
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, currentUser?.id]);
 
   if (!isAuthenticated) {
     return <AuthPage />;

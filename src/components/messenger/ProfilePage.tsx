@@ -9,8 +9,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState(currentUser?.bio || '');
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    updateProfile({ displayName, bio });
+  const handleSave = async () => {
+    await updateProfile({ displayName, bio });
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

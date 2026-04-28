@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Get call history",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "get_calls", "user_id": "1"},
+      "expectedStatus": 200,
+      "expectedBody": {"calls": []},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
