@@ -1,6 +1,9 @@
-import func2url from '../../func2url.json';
-
-const URLS = func2url as Record<string, string>;
+const URLS: Record<string, string> = {
+  auth: 'https://functions.poehali.dev/b9938f15-6052-4e77-ae8e-87838198bbb7',
+  calls: 'https://functions.poehali.dev/283c2f35-4d1f-4d67-9b45-f0e332f66462',
+  chats: 'https://functions.poehali.dev/1f4e7ec1-b68f-4cea-8536-f8467fe605d0',
+  contacts: 'https://functions.poehali.dev/e6fb252c-7040-4595-9706-3e95fbded6c3',
+};
 
 async function post(fn: string, body: object) {
   const res = await fetch(URLS[fn], {

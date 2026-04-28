@@ -22,7 +22,7 @@ export default function Index() {
       loadChats(currentUser.id);
       loadCalls(currentUser.id);
     }
-  }, [isAuthenticated, currentUser?.id]);
+  }, [isAuthenticated, currentUser?.id, loadChats, loadCalls]);
 
   if (!isAuthenticated) {
     return <AuthPage />;
