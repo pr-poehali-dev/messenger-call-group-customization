@@ -20,7 +20,7 @@ export default function Sidebar({ active, onSelect }: SidebarProps) {
   const { currentUser } = useAuthStore();
 
   return (
-    <aside className="w-16 flex flex-col items-center py-4 gap-1 bg-[hsl(220,18%,13%)] border-r border-[hsl(220,18%,18%)]">
+    <aside className="w-16 flex flex-col items-center gap-1 bg-[hsl(220,18%,13%)] border-r border-[hsl(220,18%,18%)] py-10">
       <div className="w-10 h-10 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center mb-4 shadow-md shadow-blue-500/20">
         <Icon name="MessageCircle" size={20} className="text-white" />
       </div>
