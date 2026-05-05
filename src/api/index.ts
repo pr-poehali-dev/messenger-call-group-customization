@@ -23,8 +23,8 @@ export const api = {
       post('auth', { action: 'login', username, password }),
     register: (username: string, display_name: string, password: string) =>
       post('auth', { action: 'register', username, display_name, password }),
-    updateProfile: (user_id: string, display_name: string, bio: string) =>
-      post('auth', { action: 'update_profile', user_id, display_name, bio }),
+    updateProfile: (user_id: string, display_name: string, bio: string, username?: string, avatar_b64?: string, avatar_content_type?: string) =>
+      post('auth', { action: 'update_profile', user_id, display_name, bio, username, avatar_b64, avatar_content_type }),
   },
   chats: {
     getChats: (user_id: string) =>

@@ -47,8 +47,12 @@ export const useAuthStore = create<AuthStore>()(
         if (!user) return;
         const newName = data.displayName ?? user.displayName;
         const newBio = data.bio ?? user.bio ?? '';
-        await api.auth.updateProfile(user.id, newName, newBio);
-        set({ currentUser: { ...user, ...data } });
+        const newUsername = data.username ?? undefined;
+        const avatarB64 = (data as { avatar_b64?: string }).avatar_b64;
+        const avatarContentType = (data as { avatar_content_type?: string }).avatar_content_type;
+        const result = await api.auth.updateProfile(user.id, newName, newBio, newUsername, avatarB64, avatarContentType);
+        const updatedUser = result.user ? { ...user, ...result.user } : { ...user, ...data };
+        set({ currentUser: updatedUser });
       },
     }),
     { name: 'messenger-auth' }
