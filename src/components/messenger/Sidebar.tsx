@@ -20,8 +20,8 @@ export default function Sidebar({ active, onSelect }: SidebarProps) {
   const { currentUser } = useAuthStore();
 
   return (
-    <aside className="w-16 flex flex-col items-center gap-1 bg-[hsl(220,18%,13%)] border-r border-[hsl(220,18%,18%)] py-10">
-      <div className="w-10 h-10 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center mb-4 shadow-md shadow-blue-500/20">
+    <aside className="w-16 flex flex-col items-center gap-1 bg-[hsl(var(--sidebar-bg))] border-r border-[hsl(25,20%,18%)] py-10">
+      <div className="w-10 h-10 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center mb-4 shadow-md shadow-orange-500/30">
         <Icon name="MessageCircle" size={20} className="text-white" />
       </div>
 
@@ -36,8 +36,8 @@ export default function Sidebar({ active, onSelect }: SidebarProps) {
               className={`
                 w-full aspect-square rounded-xl flex items-center justify-center transition-all duration-150
                 ${isActive
-                  ? 'bg-[hsl(var(--primary))] text-white shadow-md shadow-blue-500/20'
-                  : 'text-[hsl(220,10%,45%)] hover:bg-[hsl(220,18%,20%)] hover:text-[hsl(220,10%,70%)]'}
+                  ? 'bg-[hsl(var(--primary))] text-white shadow-md shadow-orange-500/30'
+                  : 'text-[hsl(var(--sidebar-fg))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-white'}
               `}
             >
               <Icon name={item.icon} size={20} />
@@ -47,8 +47,8 @@ export default function Sidebar({ active, onSelect }: SidebarProps) {
       </div>
 
       <div className="mt-auto pt-2 px-2 w-full">
-        <div className="w-full aspect-square rounded-xl bg-[hsl(220,18%,22%)] flex items-center justify-center">
-          <span className="text-sm font-bold text-[hsl(220,10%,70%)]">
+        <div className="w-full aspect-square rounded-xl bg-[hsl(25,20%,22%)] flex items-center justify-center">
+          <span className="text-sm font-bold text-[hsl(25,15%,70%)]">
             {currentUser?.displayName?.[0]?.toUpperCase() || '?'}
           </span>
         </div>
