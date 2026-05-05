@@ -35,6 +35,8 @@ export const api = {
       post('chats', { action: 'send_message', chat_id, sender_id, text }),
     createChat: (user_id: string, other_id: string) =>
       post('chats', { action: 'create_chat', user_id, other_id }),
+    markRead: (chat_id: string, user_id: string) =>
+      post('chats', { action: 'mark_read', chat_id, user_id }),
   },
   calls: {
     getCalls: (user_id: string) =>
