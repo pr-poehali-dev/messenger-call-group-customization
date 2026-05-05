@@ -36,10 +36,10 @@
 
     --radius: 0.75rem;
 
-    --sidebar-bg: 25 25% 13%;
-    --sidebar-fg: 25 15% 68%;
+    --sidebar-bg: 30 30% 96%;
+    --sidebar-fg: 25 15% 45%;
     --sidebar-active: 25 95% 53%;
-    --sidebar-hover: 25 20% 20%;
+    --sidebar-hover: 30 20% 90%;
 
     --msg-out: 25 95% 53%;
     --msg-in: 0 0% 100%;

@@ -49,7 +49,7 @@ export default function Index() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[hsl(220,16%,9%)] overflow-hidden animate-fade-in">
+    <div className="h-screen flex flex-col bg-[hsl(var(--background))] overflow-hidden animate-fade-in">
       <main className="flex-1 flex overflow-hidden">
         {renderContent()}
       </main>

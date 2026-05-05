@@ -26,31 +26,31 @@ function ChatItem({ chat, isActive, onClick }: { chat: Chat; isActive: boolean; 
     <button
       onClick={onClick}
       className={`w-full px-3 py-3 flex items-center gap-3 rounded-xl transition-all duration-150 text-left
-        ${isActive ? 'bg-[hsl(var(--primary))/0.12] border border-[hsl(var(--primary))/0.25]' : 'hover:bg-[hsl(220,14%,13%)]'}`}
+        ${isActive ? 'bg-orange-50 border border-orange-200' : 'hover:bg-[hsl(var(--secondary))]'}`}
     >
       <div className="relative flex-shrink-0">
         <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white font-semibold text-sm
-          ${chat.type === 'group' ? 'bg-[hsl(280,60%,50%)]' : 'bg-[hsl(200,70%,45%)]'}`}>
+          ${chat.type === 'group' ? 'bg-[hsl(280,60%,55%)]' : 'bg-[hsl(200,70%,50%)]'}`}>
           {chat.type === 'group' ? <Icon name="Users" size={18} /> : initial}
         </div>
         {isOnline && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[hsl(var(--online))] border-2 border-[hsl(220,18%,11%)]" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[hsl(var(--online))] border-2 border-white" />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-semibold truncate ${isActive ? 'text-white' : 'text-[hsl(220,10%,85%)]'}`}>
+          <span className={`text-sm font-semibold truncate ${isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))]'}`}>
             {name}
           </span>
           {chat.lastMessage && (
-            <span className="text-[11px] text-[hsl(220,10%,45%)] flex-shrink-0 ml-2">
+            <span className="text-[11px] text-[hsl(var(--muted-foreground))] flex-shrink-0 ml-2">
               {formatTime(chat.lastMessage.createdAt)}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between mt-0.5">
-          <p className="text-xs text-[hsl(220,10%,45%)] truncate pr-2">
+          <p className="text-xs text-[hsl(var(--muted-foreground))] truncate pr-2">
             {chat.lastMessage?.text || 'Нет сообщений'}
           </p>
           {chat.unreadCount > 0 && (
@@ -74,28 +74,28 @@ export default function ChatList() {
   });
 
   return (
-    <div className="w-72 flex flex-col bg-[hsl(220,18%,11%)] border-r border-[hsl(220,18%,18%)]">
-      <div className="p-4 border-b border-[hsl(220,18%,18%)]">
+    <div className="w-72 flex flex-col bg-white border-r border-[hsl(var(--border))]">
+      <div className="p-4 border-b border-[hsl(var(--border))]">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-white">Чаты</h2>
-          <button className="w-8 h-8 rounded-lg bg-[hsl(220,18%,20%)] hover:bg-[hsl(220,18%,25%)] flex items-center justify-center transition-colors">
-            <Icon name="SquarePen" size={15} className="text-[hsl(220,10%,55%)]" />
+          <h2 className="text-base font-bold text-[hsl(var(--foreground))]">Чаты</h2>
+          <button className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] hover:bg-orange-100 flex items-center justify-center transition-colors">
+            <Icon name="SquarePen" size={15} className="text-[hsl(var(--muted-foreground))]" />
           </button>
         </div>
         <div className="relative">
-          <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(220,10%,40%)]" />
+          <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск..."
-            className="w-full pl-8 pr-3 py-2 bg-[hsl(220,18%,18%)] rounded-lg text-sm text-[hsl(220,10%,80%)] placeholder-[hsl(220,10%,35%)] focus:outline-none focus:bg-[hsl(220,18%,22%)] transition-colors"
+            className="w-full pl-8 pr-3 py-2 bg-[hsl(var(--secondary))] rounded-lg text-sm text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] transition-colors"
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-[hsl(220,10%,35%)] text-sm">Нет чатов</div>
+          <div className="text-center py-12 text-[hsl(var(--muted-foreground))] text-sm">Нет чатов</div>
         ) : (
           filtered.map((chat) => (
             <ChatItem

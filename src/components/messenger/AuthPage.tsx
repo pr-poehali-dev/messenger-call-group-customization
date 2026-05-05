@@ -27,61 +27,61 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(220,18%,12%)] to-[hsl(220,18%,8%)]">
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))]">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--primary))] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+          <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--primary))] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/30">
             <Icon name="MessageCircle" size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">BobroChat</h1>
-          <p className="text-[hsl(220,15%,55%)] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">BobroChat</h1>
+          <p className="text-[hsl(var(--muted-foreground))] text-sm mt-1">
             {mode === 'login' ? 'Войдите в свой аккаунт' : 'Создайте новый аккаунт'}
           </p>
         </div>
 
-        <div className="bg-[hsl(220,18%,16%)] rounded-2xl p-6 shadow-xl border border-[hsl(220,18%,22%)]">
+        <div className="bg-white rounded-2xl p-6 shadow-xl border border-[hsl(var(--border))]">
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="text-xs font-medium text-[hsl(220,15%,55%)] uppercase tracking-wider">Имя</label>
+                <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Имя</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Ваше имя"
                   required
-                  className="w-full mt-1.5 px-4 py-3 bg-[hsl(220,18%,20%)] border border-[hsl(220,18%,26%)] rounded-xl text-white placeholder-[hsl(220,10%,40%)] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors text-sm"
+                  className="w-full mt-1.5 px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors text-sm"
                 />
               </div>
             )}
             <div>
-              <label className="text-xs font-medium text-[hsl(220,15%,55%)] uppercase tracking-wider">Username</label>
+              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Username</label>
               <div className="relative mt-1.5">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(220,10%,45%)] text-sm">@</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] text-sm">@</span>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
                   placeholder="username"
                   required
-                  className="w-full pl-8 pr-4 py-3 bg-[hsl(220,18%,20%)] border border-[hsl(220,18%,26%)] rounded-xl text-white placeholder-[hsl(220,10%,40%)] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors text-sm"
+                  className="w-full pl-8 pr-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors text-sm"
                 />
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-[hsl(220,15%,55%)] uppercase tracking-wider">Пароль</label>
+              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Пароль</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••"
                 required
-                className="w-full mt-1.5 px-4 py-3 bg-[hsl(220,18%,20%)] border border-[hsl(220,18%,26%)] rounded-xl text-white placeholder-[hsl(220,10%,40%)] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors text-sm"
+                className="w-full mt-1.5 px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors text-sm"
               />
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 rounded-xl px-3 py-2.5 border border-red-500/20">
+              <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 rounded-xl px-3 py-2.5 border border-red-200">
                 <Icon name="AlertCircle" size={14} />
                 {error}
               </div>
@@ -90,7 +90,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[hsl(var(--primary))] hover:bg-blue-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:translate-y-0"
+              className="w-full py-3 bg-[hsl(var(--primary))] hover:opacity-90 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-orange-500/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:translate-y-0"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -101,10 +101,10 @@ export default function AuthPage() {
             </button>
           </form>
 
-          <div className="mt-5 pt-5 border-t border-[hsl(220,18%,22%)] text-center">
+          <div className="mt-5 pt-5 border-t border-[hsl(var(--border))] text-center">
             <button
               onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
-              className="text-sm text-[hsl(220,15%,55%)] hover:text-[hsl(var(--primary))] transition-colors"
+              className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors"
             >
               {mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
             </button>
@@ -112,7 +112,7 @@ export default function AuthPage() {
 
           {mode === 'login' && (
             <div className="mt-3 text-center">
-              <p className="text-xs text-[hsl(220,10%,38%)]">Демо: @alice / 123456</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Демо: @alice / 123456</p>
             </div>
           )}
         </div>
