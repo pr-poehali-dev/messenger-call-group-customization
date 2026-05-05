@@ -3,6 +3,7 @@ import { useMessengerStore } from '@/store/messengerStore';
 import { useAuthStore } from '@/store/authStore';
 import { Chat } from '@/types/messenger';
 import Icon from '@/components/ui/icon';
+import UserAvatar from '@/components/ui/user-avatar';
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -19,7 +20,6 @@ function ChatItem({ chat, isActive, onClick }: { chat: Chat; isActive: boolean; 
     : null;
 
   const name = chat.type === 'group' ? chat.name : other?.displayName;
-  const initial = name?.[0]?.toUpperCase() || '?';
   const isOnline = other?.isOnline;
 
   return (
@@ -29,10 +29,13 @@ function ChatItem({ chat, isActive, onClick }: { chat: Chat; isActive: boolean; 
         ${isActive ? 'bg-orange-50 border border-orange-200' : 'hover:bg-[hsl(var(--secondary))]'}`}
     >
       <div className="relative flex-shrink-0">
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white font-semibold text-sm
-          ${chat.type === 'group' ? 'bg-[hsl(280,60%,55%)]' : 'bg-[hsl(200,70%,50%)]'}`}>
-          {chat.type === 'group' ? <Icon name="Users" size={18} /> : initial}
-        </div>
+        {chat.type === 'group' ? (
+          <div className="w-11 h-11 rounded-xl bg-[hsl(280,60%,55%)] flex items-center justify-center text-white">
+            <Icon name="Users" size={18} />
+          </div>
+        ) : (
+          <UserAvatar src={other?.avatar} name={other?.displayName} size={44} />
+        )}
         {isOnline && (
           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[hsl(var(--online))] border-2 border-white" />
         )}

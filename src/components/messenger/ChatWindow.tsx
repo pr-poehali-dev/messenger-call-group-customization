@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useMessengerStore } from '@/store/messengerStore';
 import { useAuthStore } from '@/store/authStore';
 import Icon from '@/components/ui/icon';
+import UserAvatar from '@/components/ui/user-avatar';
 
 function formatMsgTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
@@ -54,15 +55,18 @@ export default function ChatWindow() {
   }
 
   const chatName = chat.type === 'group' ? chat.name : other?.displayName;
-  const chatInitial = chatName?.[0]?.toUpperCase() || '?';
 
   return (
     <div className="flex-1 flex flex-col bg-[hsl(var(--background))]">
+      {/* Шапка */}
       <div className="px-5 py-3.5 border-b border-[hsl(var(--border))] flex items-center gap-3 bg-white">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm flex-shrink-0
-          ${chat.type === 'group' ? 'bg-[hsl(280,60%,55%)]' : 'bg-[hsl(200,70%,50%)]'}`}>
-          {chat.type === 'group' ? <Icon name="Users" size={16} /> : chatInitial}
-        </div>
+        {chat.type === 'group' ? (
+          <div className="w-10 h-10 rounded-xl bg-[hsl(280,60%,55%)] flex items-center justify-center text-white flex-shrink-0">
+            <Icon name="Users" size={16} />
+          </div>
+        ) : (
+          <UserAvatar src={other?.avatar} name={other?.displayName} size={40} />
+        )}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{chatName}</p>
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -84,6 +88,7 @@ export default function ChatWindow() {
         </div>
       </div>
 
+      {/* Сообщения */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
         {messages.length === 0 && (
           <div className="text-center py-12 text-[hsl(var(--muted-foreground))] text-sm">
@@ -102,12 +107,15 @@ export default function ChatWindow() {
               key={msg.id}
               className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-message-in ${sameAsPrev ? 'mt-0.5' : 'mt-2'}`}
             >
-              {!isMe && !sameAsPrev && (
-                <div className="w-8 h-8 rounded-lg bg-[hsl(200,70%,50%)] flex items-center justify-center text-white text-xs font-semibold mr-2 flex-shrink-0 self-end">
-                  {sender?.displayName?.[0]?.toUpperCase() || '?'}
+              {!isMe && (
+                <div className="mr-2 flex-shrink-0 self-end">
+                  {!sameAsPrev ? (
+                    <UserAvatar src={sender?.avatar} name={sender?.displayName} size={32} />
+                  ) : (
+                    <div style={{ width: 32 }} />
+                  )}
                 </div>
               )}
-              {!isMe && sameAsPrev && <div className="w-8 mr-2" />}
 
               <div className={`max-w-xs lg:max-w-md ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
                 {showName && !sameAsPrev && (
@@ -122,7 +130,13 @@ export default function ChatWindow() {
                 </div>
                 <span className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 px-1 flex items-center gap-1">
                   {formatMsgTime(msg.createdAt)}
-                  {isMe && <Icon name="CheckCheck" size={12} className="text-[hsl(var(--muted-foreground))]" />}
+                  {isMe && (
+                    <Icon
+                      name="CheckCheck"
+                      size={12}
+                      className={msg.isRead ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))]'}
+                    />
+                  )}
                 </span>
               </div>
             </div>
@@ -131,6 +145,7 @@ export default function ChatWindow() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Поле ввода */}
       <div className="px-4 py-3 border-t border-[hsl(var(--border))] bg-white">
         <div className="flex items-end gap-2">
           <button className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors flex-shrink-0">

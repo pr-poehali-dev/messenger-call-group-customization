@@ -31,9 +31,21 @@ export const useMessengerStore = create<MessengerStore>((set, get) => ({
         : state.chats,
     }));
     if (id) {
-      get().loadMessages(id);
       const { currentUser } = useAuthStore.getState();
-      if (currentUser) api.chats.markRead(id, currentUser.id).catch(() => {});
+      get().loadMessages(id).then(() => {
+        if (currentUser) {
+          api.chats.markRead(id, currentUser.id).then(() => {
+            set((state) => ({
+              messagesMap: {
+                ...state.messagesMap,
+                [id]: (state.messagesMap[id] || []).map((m) =>
+                  m.senderId !== currentUser.id ? { ...m, isRead: true } : m
+                ),
+              },
+            }));
+          }).catch(() => {});
+        }
+      });
     }
   },
 

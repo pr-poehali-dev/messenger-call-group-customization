@@ -36,10 +36,10 @@ def handler(event: dict, context) -> dict:
         for row in chats_rows:
             chat_id = row[0]
             cur.execute('''
-                SELECT u.id, u.username, u.display_name, u.bio, u.is_online, u.last_seen
+                SELECT u.id, u.username, u.display_name, u.bio, u.is_online, u.last_seen, u.avatar_url
                 FROM users u JOIN chat_members cm ON cm.user_id = u.id WHERE cm.chat_id = %s
             ''', (chat_id,))
-            members = [{'id': str(r[0]), 'username': r[1], 'displayName': r[2], 'bio': r[3], 'isOnline': r[4], 'lastSeen': str(r[5]) if r[5] else None} for r in cur.fetchall()]
+            members = [{'id': str(r[0]), 'username': r[1], 'displayName': r[2], 'bio': r[3], 'isOnline': r[4], 'lastSeen': str(r[5]) if r[5] else None, 'avatar': r[6] or ''} for r in cur.fetchall()]
             last_msg = None
             if row[4]:
                 last_msg = {'id': '0', 'chatId': str(chat_id), 'senderId': str(row[6]) if row[6] else '', 'text': row[4], 'createdAt': row[5].isoformat() if row[5] else '', 'isRead': True}
