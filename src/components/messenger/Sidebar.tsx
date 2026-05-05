@@ -20,39 +20,34 @@ export default function Sidebar({ active, onSelect }: SidebarProps) {
   const { currentUser } = useAuthStore();
 
   return (
-    <aside className="w-16 flex flex-col items-center gap-1 bg-[hsl(var(--sidebar-bg))] border-r border-[hsl(25,20%,18%)] py-10">
-      <div className="w-10 h-10 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center mb-4 shadow-md shadow-orange-500/30">
-        <Icon name="MessageCircle" size={20} className="text-white" />
-      </div>
+    <nav className="flex items-center gap-1 px-3 py-2 bg-[hsl(var(--sidebar-bg))] rounded-2xl shadow-xl shadow-black/40 border border-[hsl(25,20%,18%)]">
+      {NAV_ITEMS.map((item) => {
+        const isActive = active === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onSelect(item.id as Tab)}
+            title={item.label}
+            className={`
+              flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-150 min-w-[60px]
+              ${isActive
+                ? 'bg-[hsl(var(--primary))] text-white shadow-md shadow-orange-500/30'
+                : 'text-[hsl(var(--sidebar-fg))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-white'}
+            `}
+          >
+            <Icon name={item.icon} size={20} />
+            <span className="text-[10px] font-medium leading-none">{item.label}</span>
+          </button>
+        );
+      })}
 
-      <div className="flex-1 flex flex-col gap-1 w-full px-2">
-        {NAV_ITEMS.map((item) => {
-          const isActive = active === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelect(item.id as Tab)}
-              title={item.label}
-              className={`
-                w-full aspect-square rounded-xl flex items-center justify-center transition-all duration-150
-                ${isActive
-                  ? 'bg-[hsl(var(--primary))] text-white shadow-md shadow-orange-500/30'
-                  : 'text-[hsl(var(--sidebar-fg))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-white'}
-              `}
-            >
-              <Icon name={item.icon} size={20} />
-            </button>
-          );
-        })}
-      </div>
+      <div className="w-px h-8 bg-[hsl(25,20%,22%)] mx-1" />
 
-      <div className="mt-auto pt-2 px-2 w-full">
-        <div className="w-full aspect-square rounded-xl bg-[hsl(25,20%,22%)] flex items-center justify-center">
-          <span className="text-sm font-bold text-[hsl(25,15%,70%)]">
-            {currentUser?.displayName?.[0]?.toUpperCase() || '?'}
-          </span>
-        </div>
+      <div className="w-10 h-10 rounded-xl bg-[hsl(25,20%,22%)] flex items-center justify-center shrink-0">
+        <span className="text-sm font-bold text-[hsl(25,15%,70%)]">
+          {currentUser?.displayName?.[0]?.toUpperCase() || '?'}
+        </span>
       </div>
-    </aside>
+    </nav>
   );
 }

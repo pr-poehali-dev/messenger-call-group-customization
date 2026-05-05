@@ -33,7 +33,7 @@ export default function AuthPage() {
           <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--primary))] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
             <Icon name="MessageCircle" size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Messenger</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">BobroChat</h1>
           <p className="text-[hsl(220,15%,55%)] text-sm mt-1">
             {mode === 'login' ? 'Войдите в свой аккаунт' : 'Создайте новый аккаунт'}
           </p>
