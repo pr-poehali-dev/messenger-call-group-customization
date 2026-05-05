@@ -23,7 +23,12 @@ export const useMessengerStore = create<MessengerStore>((set, get) => ({
   loading: false,
 
   setActiveChat: (id) => {
-    set({ activeChat: id });
+    set((state) => ({
+      activeChat: id,
+      chats: id
+        ? state.chats.map((c) => c.id === id ? { ...c, unreadCount: 0 } : c)
+        : state.chats,
+    }));
     if (id) get().loadMessages(id);
   },
 
