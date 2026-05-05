@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Chat, Message, CallRecord } from '@/types/messenger';
 import { api } from '@/api';
+import { useAuthStore } from '@/store/authStore';
 
 interface MessengerStore {
   chats: Chat[];
@@ -29,7 +30,11 @@ export const useMessengerStore = create<MessengerStore>((set, get) => ({
         ? state.chats.map((c) => c.id === id ? { ...c, unreadCount: 0 } : c)
         : state.chats,
     }));
-    if (id) get().loadMessages(id);
+    if (id) {
+      get().loadMessages(id);
+      const { currentUser } = useAuthStore.getState();
+      if (currentUser) api.chats.markRead(id, currentUser.id).catch(() => {});
+    }
   },
 
   loadChats: async (userId) => {
