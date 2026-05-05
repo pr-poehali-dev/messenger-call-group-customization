@@ -50,11 +50,13 @@ export default function Index() {
 
   return (
     <div className="h-screen flex flex-col bg-[hsl(var(--background))] overflow-hidden animate-fade-in">
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden pb-20">
         {renderContent()}
       </main>
-      <div className="flex justify-center pb-4 pt-2 px-4 shrink-0">
-        <Sidebar active={activeTab} onSelect={setActiveTab} />
+      <div className="fixed bottom-4 left-0 right-0 flex justify-center z-50 pointer-events-none">
+        <div className="pointer-events-auto">
+          <Sidebar active={activeTab} onSelect={setActiveTab} />
+        </div>
       </div>
     </div>
   );
