@@ -33,7 +33,7 @@ export default function Index() {
       case 'chats':
         return (
           <>
-            <ChatList />
+            <ChatList onSettings={() => setActiveTab('settings')} />
             <ChatWindow />
           </>
         );

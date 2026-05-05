@@ -52,22 +52,19 @@ function ChatItem({ chat, isActive, onClick }: { chat: Chat; isActive: boolean; 
             </span>
           )}
         </div>
-        <div className="flex items-center justify-between mt-0.5">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] truncate pr-2">
-            {chat.lastMessage?.text || 'Нет сообщений'}
-          </p>
-          {chat.unreadCount > 0 && (
-            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[hsl(var(--primary))] text-white text-[10px] font-bold flex items-center justify-center">
-              {chat.unreadCount}
-            </span>
-          )}
-        </div>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] truncate mt-0.5">
+          {chat.lastMessage?.text || 'Нет сообщений'}
+        </p>
       </div>
     </button>
   );
 }
 
-export default function ChatList() {
+interface ChatListProps {
+  onSettings: () => void;
+}
+
+export default function ChatList({ onSettings }: ChatListProps) {
   const { chats, activeChat, setActiveChat } = useMessengerStore();
   const [search, setSearch] = useState('');
 
@@ -81,9 +78,18 @@ export default function ChatList() {
       <div className="p-4 border-b border-[hsl(var(--border))]">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-[hsl(var(--foreground))]">Чаты</h2>
-          <button className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] hover:bg-orange-100 flex items-center justify-center transition-colors">
-            <Icon name="SquarePen" size={15} className="text-[hsl(var(--muted-foreground))]" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onSettings}
+              className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] hover:bg-orange-100 flex items-center justify-center transition-colors"
+              title="Настройки"
+            >
+              <Icon name="Settings" size={15} className="text-[hsl(var(--muted-foreground))]" />
+            </button>
+            <button className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] hover:bg-orange-100 flex items-center justify-center transition-colors" title="Новый чат">
+              <Icon name="SquarePen" size={15} className="text-[hsl(var(--muted-foreground))]" />
+            </button>
+          </div>
         </div>
         <div className="relative">
           <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
