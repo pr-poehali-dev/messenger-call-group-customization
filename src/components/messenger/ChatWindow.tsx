@@ -3,6 +3,8 @@ import { useMessengerStore } from '@/store/messengerStore';
 import { useAuthStore } from '@/store/authStore';
 import Icon from '@/components/ui/icon';
 import UserAvatar from '@/components/ui/user-avatar';
+import UserProfileModal from '@/components/messenger/UserProfileModal';
+import { User } from '@/types/messenger';
 
 function formatMsgTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
@@ -17,6 +19,7 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
   const { currentUser } = useAuthStore();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [profileUser, setProfileUser] = useState<User | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const chat = chats.find((c) => c.id === activeChat);
@@ -72,21 +75,26 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
             <Icon name="ArrowLeft" size={20} className="text-[hsl(var(--foreground))]" />
           </button>
         )}
-        {chat.type === 'group' ? (
-          <div className="w-10 h-10 rounded-xl bg-[hsl(280,60%,55%)] flex items-center justify-center text-white flex-shrink-0">
-            <Icon name="Users" size={16} />
+        <button
+          onClick={() => other && setProfileUser(other)}
+          className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+        >
+          {chat.type === 'group' ? (
+            <div className="w-10 h-10 rounded-xl bg-[hsl(280,60%,55%)] flex items-center justify-center text-white flex-shrink-0">
+              <Icon name="Users" size={16} />
+            </div>
+          ) : (
+            <UserAvatar src={other?.avatar} name={other?.displayName} size={40} />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{chatName}</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              {chat.type === 'group'
+                ? `${chat.participants.length} участников`
+                : other?.isOnline ? 'В сети' : other?.lastSeen || 'Не в сети'}
+            </p>
           </div>
-        ) : (
-          <UserAvatar src={other?.avatar} name={other?.displayName} size={40} />
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{chatName}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            {chat.type === 'group'
-              ? `${chat.participants.length} участников`
-              : other?.isOnline ? 'В сети' : other?.lastSeen || 'Не в сети'}
-          </p>
-        </div>
+        </button>
         <div className="flex items-center gap-1">
           <button className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors">
             <Icon name="Phone" size={17} className="text-[hsl(var(--muted-foreground))]" />
@@ -186,6 +194,10 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
           </button>
         </div>
       </div>
+
+      {profileUser && (
+        <UserProfileModal user={profileUser} onClose={() => setProfileUser(null)} />
+      )}
     </div>
   );
 }
