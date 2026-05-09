@@ -8,7 +8,11 @@ function formatMsgTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function ChatWindow() {
+interface ChatWindowProps {
+  onBack?: () => void;
+}
+
+export default function ChatWindow({ onBack }: ChatWindowProps) {
   const { chats, activeChat, sendMessage, messagesMap } = useMessengerStore();
   const { currentUser } = useAuthStore();
   const [text, setText] = useState('');
@@ -43,7 +47,7 @@ export default function ChatWindow() {
 
   if (!activeChat || !chat) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[hsl(var(--background))]">
+      <div className="hidden md:flex flex-1 items-center justify-center bg-[hsl(var(--background))]">
         <div className="text-center animate-fade-in">
           <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--secondary))] flex items-center justify-center mx-auto mb-4">
             <Icon name="MessageCircle" size={28} className="text-[hsl(var(--muted-foreground))]" />
@@ -57,9 +61,17 @@ export default function ChatWindow() {
   const chatName = chat.type === 'group' ? chat.name : other?.displayName;
 
   return (
-    <div className="flex-1 flex flex-col bg-[hsl(var(--background))]">
+    <div className="flex-1 flex flex-col bg-[hsl(var(--background))] absolute inset-0 md:relative md:inset-auto">
       {/* Шапка */}
-      <div className="px-5 py-3.5 border-b border-[hsl(var(--border))] flex items-center gap-3 bg-white">
+      <div className="px-3 py-3.5 border-b border-[hsl(var(--border))] flex items-center gap-2 bg-white">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="md:hidden w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors flex-shrink-0"
+          >
+            <Icon name="ArrowLeft" size={20} className="text-[hsl(var(--foreground))]" />
+          </button>
+        )}
         {chat.type === 'group' ? (
           <div className="w-10 h-10 rounded-xl bg-[hsl(280,60%,55%)] flex items-center justify-center text-white flex-shrink-0">
             <Icon name="Users" size={16} />

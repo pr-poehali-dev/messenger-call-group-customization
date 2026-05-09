@@ -34,7 +34,7 @@ export default function Index() {
         return (
           <>
             <ChatList onSettings={() => setActiveTab('settings')} />
-            <ChatWindow />
+            <ChatWindow onBack={() => useMessengerStore.getState().setActiveChat(null)} />
           </>
         );
       case 'contacts':
@@ -50,7 +50,7 @@ export default function Index() {
 
   return (
     <div className="h-screen flex flex-col bg-[hsl(var(--background))] overflow-hidden animate-fade-in">
-      <main className="flex-1 flex overflow-hidden pb-20">
+      <main className="flex-1 flex overflow-hidden pb-20 relative">
         {renderContent()}
       </main>
       <div className="fixed bottom-4 left-0 right-0 flex justify-center z-50 pointer-events-none">

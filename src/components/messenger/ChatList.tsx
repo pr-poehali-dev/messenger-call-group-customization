@@ -74,7 +74,7 @@ export default function ChatList({ onSettings }: ChatListProps) {
   });
 
   return (
-    <div className="w-72 flex flex-col bg-white border-r border-[hsl(var(--border))]">
+    <div className={`flex flex-col bg-white border-r border-[hsl(var(--border))] w-full md:w-72 ${activeChat ? 'hidden md:flex' : 'flex'}`}>
       <div className="p-4 border-b border-[hsl(var(--border))]">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-[hsl(var(--foreground))]">Чаты</h2>
