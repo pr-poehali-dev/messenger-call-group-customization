@@ -1,19 +1,40 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { User } from '@/types/messenger';
 import Icon from '@/components/ui/icon';
 import UserAvatar from '@/components/ui/user-avatar';
+import { api } from '@/api';
+import { useAuthStore } from '@/store/authStore';
+import { useMessengerStore } from '@/store/messengerStore';
 
 interface UserProfileModalProps {
   user: User;
   onClose: () => void;
+  onChat?: () => void;
 }
 
-export default function UserProfileModal({ user, onClose }: UserProfileModalProps) {
+export default function UserProfileModal({ user, onClose, onChat }: UserProfileModalProps) {
+  const { currentUser } = useAuthStore();
+  const { loadChats, setActiveChat } = useMessengerStore();
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  const handleStartChat = async () => {
+    if (!currentUser) return;
+    setLoading(true);
+    const res = await api.chats.createChat(currentUser.id, user.id);
+    await loadChats(currentUser.id);
+    setActiveChat(String(res.chat_id));
+    setLoading(false);
+    onClose();
+    onChat?.();
+  };
+
+  const isMe = currentUser?.id === user.id;
 
   return (
     <div
@@ -60,6 +81,20 @@ export default function UserProfileModal({ user, onClose }: UserProfileModalProp
               <p className="text-sm font-medium text-[hsl(var(--foreground))]">@{user.username}</p>
             </div>
           </div>
+
+          {!isMe && (
+            <button
+              onClick={handleStartChat}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[hsl(var(--primary))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {loading
+                ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <Icon name="MessageCircle" size={16} className="text-white" />
+              }
+              Написать
+            </button>
+          )}
         </div>
       </div>
     </div>

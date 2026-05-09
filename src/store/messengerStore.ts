@@ -13,6 +13,8 @@ interface MessengerStore {
   loadChats: (userId: string) => Promise<void>;
   loadMessages: (chatId: string) => Promise<void>;
   sendMessage: (chatId: string, senderId: string, text: string, mediaUrl?: string, mediaType?: string) => Promise<void>;
+  deleteMessage: (chatId: string, messageId: string, userId: string) => Promise<void>;
+  toggleReaction: (chatId: string, messageId: string, userId: string, emoji: string, hasReacted: boolean) => Promise<void>;
   loadCalls: (userId: string) => Promise<void>;
 }
 
@@ -77,6 +79,42 @@ export const useMessengerStore = create<MessengerStore>((set, get) => ({
       chats: state.chats.map((c) =>
         c.id === chatId ? { ...c, lastMessage: newMsg } : c
       ),
+    }));
+  },
+
+  deleteMessage: async (chatId, messageId, userId) => {
+    await api.chats.removeMessage(messageId, userId);
+    set((state) => ({
+      messagesMap: {
+        ...state.messagesMap,
+        [chatId]: (state.messagesMap[chatId] || []).map((m) =>
+          m.id === messageId ? { ...m, isRemoved: true, text: '', mediaUrl: undefined } : m
+        ),
+      },
+    }));
+  },
+
+  toggleReaction: async (chatId, messageId, userId, emoji, hasReacted) => {
+    if (hasReacted) {
+      await api.chats.removeReaction(messageId, userId, emoji);
+    } else {
+      await api.chats.addReaction(messageId, userId, emoji);
+    }
+    set((state) => ({
+      messagesMap: {
+        ...state.messagesMap,
+        [chatId]: (state.messagesMap[chatId] || []).map((m) => {
+          if (m.id !== messageId) return m;
+          const reactions = { ...(m.reactions || {}) };
+          if (hasReacted) {
+            reactions[emoji] = Math.max(0, (reactions[emoji] || 1) - 1);
+            if (reactions[emoji] === 0) delete reactions[emoji];
+          } else {
+            reactions[emoji] = (reactions[emoji] || 0) + 1;
+          }
+          return { ...m, reactions };
+        }),
+      },
     }));
   },
 

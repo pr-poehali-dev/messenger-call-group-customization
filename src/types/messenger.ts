@@ -18,6 +18,8 @@ export interface Message {
   isRead: boolean;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  isRemoved?: boolean;
+  reactions?: Record<string, number>;
 }
 
 export interface Chat {

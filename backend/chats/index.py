@@ -18,7 +18,7 @@ def get_s3():
     )
 
 def handler(event: dict, context) -> dict:
-    """Чаты и сообщения: получить список, историю, отправить сообщение, загрузить медиа"""
+    """Чаты и сообщения: список, история, отправка, медиа, реакции, удаление"""
     cors = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type'}
 
     if event.get('httpMethod') == 'OPTIONS':
@@ -33,10 +33,10 @@ def handler(event: dict, context) -> dict:
         user_id = int(body['user_id'])
         cur.execute('''
             SELECT c.id, c.type, c.name, c.created_at,
-                   (SELECT text FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_text,
-                   (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time,
-                   (SELECT sender_id FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_sender,
-                   (SELECT COUNT(*) FROM messages WHERE chat_id = c.id AND is_read = false AND sender_id != %s) as unread
+                   (SELECT text FROM messages WHERE chat_id = c.id AND is_removed = false ORDER BY created_at DESC LIMIT 1) as last_text,
+                   (SELECT created_at FROM messages WHERE chat_id = c.id AND is_removed = false ORDER BY created_at DESC LIMIT 1) as last_time,
+                   (SELECT sender_id FROM messages WHERE chat_id = c.id AND is_removed = false ORDER BY created_at DESC LIMIT 1) as last_sender,
+                   (SELECT COUNT(*) FROM messages WHERE chat_id = c.id AND is_read = false AND sender_id != %s AND is_removed = false) as unread
             FROM chats c
             JOIN chat_members cm ON cm.chat_id = c.id
             WHERE cm.user_id = %s
@@ -61,9 +61,39 @@ def handler(event: dict, context) -> dict:
     if action == 'get_messages':
         chat_id = int(body['chat_id'])
         limit = int(body.get('limit', 50))
-        cur.execute('SELECT id, chat_id, sender_id, text, is_read, created_at, media_url, media_type FROM messages WHERE chat_id = %s ORDER BY created_at ASC LIMIT %s', (chat_id, limit))
+        cur.execute('''
+            SELECT m.id, m.chat_id, m.sender_id, m.text, m.is_read, m.created_at,
+                   m.media_url, m.media_type, m.is_removed
+            FROM messages m
+            WHERE m.chat_id = %s
+            ORDER BY m.created_at ASC LIMIT %s
+        ''', (chat_id, limit))
         rows = cur.fetchall()
-        msgs = [{'id': str(r[0]), 'chatId': str(r[1]), 'senderId': str(r[2]) if r[2] else '', 'text': r[3] or '', 'isRead': r[4], 'createdAt': r[5].isoformat(), 'mediaUrl': r[6], 'mediaType': r[7]} for r in rows]
+        msg_ids = [r[0] for r in rows]
+        reactions_map = {}
+        if msg_ids:
+            placeholders = ','.join(['%s'] * len(msg_ids))
+            cur.execute(f'SELECT message_id, user_id, emoji FROM message_reactions WHERE message_id IN ({placeholders}) AND is_active = true', msg_ids)
+            for rr in cur.fetchall():
+                mid = str(rr[0])
+                if mid not in reactions_map:
+                    reactions_map[mid] = {}
+                reactions_map[mid][rr[2]] = reactions_map[mid].get(rr[2], 0) + 1
+        msgs = []
+        for r in rows:
+            mid = str(r[0])
+            msgs.append({
+                'id': mid,
+                'chatId': str(r[1]),
+                'senderId': str(r[2]) if r[2] else '',
+                'text': '' if r[8] else (r[3] or ''),
+                'isRead': r[4],
+                'createdAt': r[5].isoformat(),
+                'mediaUrl': None if r[8] else r[6],
+                'mediaType': None if r[8] else r[7],
+                'isRemoved': r[8],
+                'reactions': reactions_map.get(mid, {}),
+            })
         conn.close()
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'messages': msgs})}
 
@@ -80,7 +110,41 @@ def handler(event: dict, context) -> dict:
         row = cur.fetchone()
         conn.commit()
         conn.close()
-        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'message': {'id': str(row[0]), 'chatId': str(chat_id), 'senderId': str(sender_id), 'text': text, 'isRead': False, 'createdAt': row[1].isoformat(), 'mediaUrl': media_url, 'mediaType': media_type}})}
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'message': {'id': str(row[0]), 'chatId': str(chat_id), 'senderId': str(sender_id), 'text': text, 'isRead': False, 'createdAt': row[1].isoformat(), 'mediaUrl': media_url, 'mediaType': media_type, 'isRemoved': False, 'reactions': {}}})}
+
+    if action == 'remove_message':
+        msg_id = int(body['message_id'])
+        user_id = int(body['user_id'])
+        cur.execute('UPDATE messages SET is_removed = true WHERE id = %s AND sender_id = %s', (msg_id, user_id))
+        conn.commit()
+        conn.close()
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'ok': True})}
+
+    if action == 'add_reaction':
+        msg_id = int(body['message_id'])
+        user_id = int(body['user_id'])
+        emoji = body['emoji']
+        cur.execute('''
+            INSERT INTO message_reactions (message_id, user_id, emoji, is_active)
+            VALUES (%s, %s, %s, true)
+            ON CONFLICT (message_id, user_id, emoji)
+            DO UPDATE SET is_active = true
+        ''', (msg_id, user_id, emoji))
+        conn.commit()
+        conn.close()
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'ok': True})}
+
+    if action == 'remove_reaction':
+        msg_id = int(body['message_id'])
+        user_id = int(body['user_id'])
+        emoji = body['emoji']
+        cur.execute('''
+            UPDATE message_reactions SET is_active = false
+            WHERE message_id = %s AND user_id = %s AND emoji = %s
+        ''', (msg_id, user_id, emoji))
+        conn.commit()
+        conn.close()
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'ok': True})}
 
     if action == 'upload_media':
         sender_id = body['sender_id']

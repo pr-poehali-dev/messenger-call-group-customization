@@ -39,6 +39,12 @@ export const api = {
       post('chats', { action: 'create_chat', user_id, other_id }),
     markRead: (chat_id: string, user_id: string) =>
       post('chats', { action: 'mark_read', chat_id, user_id }),
+    removeMessage: (message_id: string, user_id: string) =>
+      post('chats', { action: 'remove_message', message_id, user_id }),
+    addReaction: (message_id: string, user_id: string, emoji: string) =>
+      post('chats', { action: 'add_reaction', message_id, user_id, emoji }),
+    removeReaction: (message_id: string, user_id: string, emoji: string) =>
+      post('chats', { action: 'remove_reaction', message_id, user_id, emoji }),
   },
   calls: {
     getCalls: (user_id: string) =>

@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMessengerStore } from '@/store/messengerStore';
 import { useAuthStore } from '@/store/authStore';
 import { api } from '@/api';
 import Icon from '@/components/ui/icon';
 import UserAvatar from '@/components/ui/user-avatar';
 import UserProfileModal from '@/components/messenger/UserProfileModal';
-import { User } from '@/types/messenger';
+import MessageContextMenu from '@/components/messenger/MessageContextMenu';
+import { User, Message } from '@/types/messenger';
 
 function formatMsgTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
@@ -15,15 +16,23 @@ interface ChatWindowProps {
   onBack?: () => void;
 }
 
+interface ContextMenu {
+  x: number;
+  y: number;
+  message: Message;
+}
+
 export default function ChatWindow({ onBack }: ChatWindowProps) {
-  const { chats, activeChat, sendMessage, messagesMap } = useMessengerStore();
+  const { chats, activeChat, sendMessage, deleteMessage, toggleReaction, messagesMap } = useMessengerStore();
   const { currentUser } = useAuthStore();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [mediaPreview, setMediaPreview] = useState<{ url: string; type: 'image' | 'video'; file: File } | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const chat = chats.find((c) => c.id === activeChat);
   const other = chat?.type === 'direct'
@@ -34,6 +43,26 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  const openMenu = useCallback((e: { clientX: number; clientY: number }, msg: Message) => {
+    setContextMenu({ x: e.clientX, y: e.clientY, message: msg });
+  }, []);
+
+  const handleRightClick = (e: React.MouseEvent, msg: Message) => {
+    e.preventDefault();
+    openMenu(e, msg);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, msg: Message) => {
+    const touch = e.touches[0];
+    longPressTimer.current = setTimeout(() => {
+      openMenu({ clientX: touch.clientX, clientY: touch.clientY }, msg);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -131,14 +160,11 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
           <button className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors">
             <Icon name="Video" size={17} className="text-[hsl(var(--muted-foreground))]" />
           </button>
-          <button className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors">
-            <Icon name="MoreVertical" size={17} className="text-[hsl(var(--muted-foreground))]" />
-          </button>
         </div>
       </div>
 
       {/* Сообщения */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {messages.length === 0 && (
           <div className="text-center py-12 text-[hsl(var(--muted-foreground))] text-sm">
             Начните диалог — напишите первое сообщение
@@ -150,14 +176,15 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
           const showName = chat.type === 'group' && !isMe;
           const prevMsg = messages[i - 1];
           const sameAsPrev = prevMsg?.senderId === msg.senderId;
+          const reactionEntries = Object.entries(msg.reactions || {}).filter(([, count]) => count > 0);
 
           return (
             <div
               key={msg.id}
-              className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-message-in ${sameAsPrev ? 'mt-0.5' : 'mt-2'}`}
+              className={`flex ${isMe ? 'justify-end' : 'justify-start'} ${sameAsPrev ? 'mt-0.5' : 'mt-3'}`}
             >
               {!isMe && (
-                <div className="mr-2 flex-shrink-0 self-end">
+                <div className="mr-2 flex-shrink-0 self-end mb-5">
                   {!sameAsPrev ? (
                     <UserAvatar src={sender?.avatar} name={sender?.displayName} size={32} />
                   ) : (
@@ -166,38 +193,61 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
                 </div>
               )}
 
-              <div className={`max-w-xs lg:max-w-md ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
+              <div className={`max-w-[72vw] md:max-w-md ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
                 {showName && !sameAsPrev && (
                   <span className="text-[11px] text-[hsl(var(--muted-foreground))] mb-1 px-1">{sender?.displayName}</span>
                 )}
-                <div className={`rounded-2xl overflow-hidden text-sm leading-relaxed
-                  ${isMe
-                    ? 'bg-[hsl(var(--primary))] text-white rounded-br-sm'
-                    : 'bg-white text-[hsl(var(--foreground))] rounded-bl-sm shadow-sm border border-[hsl(var(--border))]'
-                  }`}>
-                  {msg.mediaUrl && msg.mediaType === 'image' && (
-                    <img
-                      src={msg.mediaUrl}
-                      alt="фото"
-                      className="max-w-full rounded-t-2xl block"
-                      style={{ maxHeight: 280 }}
-                    />
-                  )}
-                  {msg.mediaUrl && msg.mediaType === 'video' && (
-                    <video
-                      src={msg.mediaUrl}
-                      controls
-                      className="max-w-full rounded-t-2xl block"
-                      style={{ maxHeight: 280 }}
-                    />
-                  )}
-                  {msg.text && (
-                    <p className="px-4 py-2.5">{msg.text}</p>
+
+                <div
+                  onContextMenu={(e) => !msg.isRemoved && handleRightClick(e, msg)}
+                  onTouchStart={(e) => !msg.isRemoved && handleTouchStart(e, msg)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchEnd}
+                  className={`rounded-2xl overflow-hidden text-sm leading-relaxed select-none cursor-pointer
+                    ${msg.isRemoved
+                      ? 'bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))] italic px-4 py-2.5'
+                      : isMe
+                        ? 'bg-[hsl(var(--primary))] text-white rounded-br-sm'
+                        : 'bg-white text-[hsl(var(--foreground))] rounded-bl-sm shadow-sm border border-[hsl(var(--border))]'
+                    }`}
+                >
+                  {msg.isRemoved ? (
+                    <span>Сообщение удалено</span>
+                  ) : (
+                    <>
+                      {msg.mediaUrl && msg.mediaType === 'image' && (
+                        <img src={msg.mediaUrl} alt="фото" className="max-w-full block" style={{ maxHeight: 280 }} />
+                      )}
+                      {msg.mediaUrl && msg.mediaType === 'video' && (
+                        <video src={msg.mediaUrl} controls className="max-w-full block" style={{ maxHeight: 280 }} />
+                      )}
+                      {msg.text && <p className="px-4 py-2.5">{msg.text}</p>}
+                    </>
                   )}
                 </div>
+
+                {/* Реакции */}
+                {reactionEntries.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1 px-1">
+                    {reactionEntries.map(([emoji, count]) => {
+                      const hasReacted = false;
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => currentUser && toggleReaction(activeChat!, msg.id, currentUser.id, emoji, hasReacted)}
+                          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white border border-[hsl(var(--border))] text-xs shadow-sm hover:bg-orange-50 transition-colors"
+                        >
+                          <span>{emoji}</span>
+                          <span className="text-[hsl(var(--muted-foreground))]">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <span className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 px-1 flex items-center gap-1">
                   {formatMsgTime(msg.createdAt)}
-                  {isMe && (
+                  {isMe && !msg.isRemoved && (
                     <Icon
                       name="CheckCheck"
                       size={12}
@@ -233,13 +283,7 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
 
       {/* Поле ввода */}
       <div className="px-4 py-3 pb-24 md:pb-3 border-t border-[hsl(var(--border))] bg-white">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFileChange} />
         <div className="flex items-end gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -271,8 +315,28 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
         </div>
       </div>
 
+      {/* Контекстное меню */}
+      {contextMenu && currentUser && (
+        <MessageContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          isOwn={contextMenu.message.senderId === currentUser.id}
+          onReact={(emoji) => {
+            const msg = contextMenu.message;
+            const hasReacted = (msg.reactions?.[emoji] || 0) > 0;
+            toggleReaction(activeChat!, msg.id, currentUser.id, emoji, hasReacted);
+          }}
+          onDelete={() => deleteMessage(activeChat!, contextMenu.message.id, currentUser.id)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
       {profileUser && (
-        <UserProfileModal user={profileUser} onClose={() => setProfileUser(null)} />
+        <UserProfileModal
+          user={profileUser}
+          onClose={() => setProfileUser(null)}
+          onChat={other ? () => { setProfileUser(null); } : undefined}
+        />
       )}
     </div>
   );
