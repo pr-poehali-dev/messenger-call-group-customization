@@ -158,7 +158,7 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
       </div>
 
       {/* Поле ввода */}
-      <div className="px-4 py-3 border-t border-[hsl(var(--border))] bg-white">
+      <div className="px-4 py-3 pb-24 md:pb-3 border-t border-[hsl(var(--border))] bg-white">
         <div className="flex items-end gap-2">
           <button className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors flex-shrink-0">
             <Icon name="Paperclip" size={18} className="text-[hsl(var(--muted-foreground))]" />
