@@ -71,14 +71,19 @@ def handler(event: dict, context) -> dict:
         rows = cur.fetchall()
         msg_ids = [r[0] for r in rows]
         reactions_map = {}
+        reacted_by_map = {}
         if msg_ids:
             placeholders = ','.join(['%s'] * len(msg_ids))
             cur.execute(f'SELECT message_id, user_id, emoji FROM message_reactions WHERE message_id IN ({placeholders}) AND is_active = true', msg_ids)
             for rr in cur.fetchall():
                 mid = str(rr[0])
+                uid = str(rr[1])
+                em = rr[2]
                 if mid not in reactions_map:
                     reactions_map[mid] = {}
-                reactions_map[mid][rr[2]] = reactions_map[mid].get(rr[2], 0) + 1
+                    reacted_by_map[mid] = {}
+                reactions_map[mid][em] = reactions_map[mid].get(em, 0) + 1
+                reacted_by_map[mid].setdefault(em, []).append(uid)
         msgs = []
         for r in rows:
             mid = str(r[0])
@@ -93,6 +98,7 @@ def handler(event: dict, context) -> dict:
                 'mediaType': None if r[8] else r[7],
                 'isRemoved': r[8],
                 'reactions': reactions_map.get(mid, {}),
+                'reactedBy': reacted_by_map.get(mid, {}),
             })
         conn.close()
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'messages': msgs})}

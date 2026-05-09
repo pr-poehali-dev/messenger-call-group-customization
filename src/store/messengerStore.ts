@@ -95,24 +95,44 @@ export const useMessengerStore = create<MessengerStore>((set, get) => ({
   },
 
   toggleReaction: async (chatId, messageId, userId, emoji, hasReacted) => {
+    const state = get();
+    const msg = (state.messagesMap[chatId] || []).find((m) => m.id === messageId);
+    const prevEmoji = msg ? Object.entries(msg.reactedBy || {}).find(([, uids]) => uids.includes(userId))?.[0] : undefined;
+
     if (hasReacted) {
       await api.chats.removeReaction(messageId, userId, emoji);
     } else {
+      if (prevEmoji && prevEmoji !== emoji) {
+        await api.chats.removeReaction(messageId, userId, prevEmoji);
+      }
       await api.chats.addReaction(messageId, userId, emoji);
     }
-    set((state) => ({
+
+    set((st) => ({
       messagesMap: {
-        ...state.messagesMap,
-        [chatId]: (state.messagesMap[chatId] || []).map((m) => {
+        ...st.messagesMap,
+        [chatId]: (st.messagesMap[chatId] || []).map((m) => {
           if (m.id !== messageId) return m;
           const reactions = { ...(m.reactions || {}) };
+          const reactedBy: Record<string, string[]> = {};
+          for (const [em, uids] of Object.entries(m.reactedBy || {})) {
+            reactedBy[em] = [...uids];
+          }
+
           if (hasReacted) {
             reactions[emoji] = Math.max(0, (reactions[emoji] || 1) - 1);
             if (reactions[emoji] === 0) delete reactions[emoji];
+            reactedBy[emoji] = (reactedBy[emoji] || []).filter((id) => id !== userId);
           } else {
+            if (prevEmoji && prevEmoji !== emoji) {
+              reactions[prevEmoji] = Math.max(0, (reactions[prevEmoji] || 1) - 1);
+              if (reactions[prevEmoji] === 0) delete reactions[prevEmoji];
+              reactedBy[prevEmoji] = (reactedBy[prevEmoji] || []).filter((id) => id !== userId);
+            }
             reactions[emoji] = (reactions[emoji] || 0) + 1;
+            reactedBy[emoji] = [...(reactedBy[emoji] || []), userId];
           }
-          return { ...m, reactions };
+          return { ...m, reactions, reactedBy };
         }),
       },
     }));

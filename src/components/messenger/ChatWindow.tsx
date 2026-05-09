@@ -230,15 +230,19 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
                 {reactionEntries.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1 px-1">
                     {reactionEntries.map(([emoji, count]) => {
-                      const hasReacted = false;
+                      const hasReacted = !!(currentUser && msg.reactedBy?.[emoji]?.includes(currentUser.id));
                       return (
                         <button
                           key={emoji}
                           onClick={() => currentUser && toggleReaction(activeChat!, msg.id, currentUser.id, emoji, hasReacted)}
-                          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white border border-[hsl(var(--border))] text-xs shadow-sm hover:bg-orange-50 transition-colors"
+                          className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs shadow-sm transition-colors border
+                            ${hasReacted
+                              ? 'bg-orange-100 border-[hsl(var(--primary))] text-[hsl(var(--primary))]'
+                              : 'bg-white border-[hsl(var(--border))] hover:bg-orange-50'
+                            }`}
                         >
                           <span>{emoji}</span>
-                          <span className="text-[hsl(var(--muted-foreground))]">{count}</span>
+                          <span className="font-medium">{count}</span>
                         </button>
                       );
                     })}
@@ -323,7 +327,7 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
           isOwn={contextMenu.message.senderId === currentUser.id}
           onReact={(emoji) => {
             const msg = contextMenu.message;
-            const hasReacted = (msg.reactions?.[emoji] || 0) > 0;
+            const hasReacted = !!(msg.reactedBy?.[emoji]?.includes(currentUser.id));
             toggleReaction(activeChat!, msg.id, currentUser.id, emoji, hasReacted);
           }}
           onDelete={() => deleteMessage(activeChat!, contextMenu.message.id, currentUser.id)}

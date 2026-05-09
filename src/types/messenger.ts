@@ -20,6 +20,7 @@ export interface Message {
   mediaType?: 'image' | 'video';
   isRemoved?: boolean;
   reactions?: Record<string, number>;
+  reactedBy?: Record<string, string[]>;
 }
 
 export interface Chat {
