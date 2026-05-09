@@ -31,8 +31,10 @@ export const api = {
       post('chats', { action: 'get_chats', user_id }),
     getMessages: (chat_id: string, limit = 50) =>
       post('chats', { action: 'get_messages', chat_id, limit }),
-    sendMessage: (chat_id: string, sender_id: string, text: string) =>
-      post('chats', { action: 'send_message', chat_id, sender_id, text }),
+    sendMessage: (chat_id: string, sender_id: string, text: string, media_url?: string, media_type?: string) =>
+      post('chats', { action: 'send_message', chat_id, sender_id, text, media_url, media_type }),
+    uploadMedia: (sender_id: string, file_b64: string, content_type: string) =>
+      post('chats', { action: 'upload_media', sender_id, file_b64, content_type }),
     createChat: (user_id: string, other_id: string) =>
       post('chats', { action: 'create_chat', user_id, other_id }),
     markRead: (chat_id: string, user_id: string) =>

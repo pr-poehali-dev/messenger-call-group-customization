@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMessengerStore } from '@/store/messengerStore';
 import { useAuthStore } from '@/store/authStore';
+import { api } from '@/api';
 import Icon from '@/components/ui/icon';
 import UserAvatar from '@/components/ui/user-avatar';
 import UserProfileModal from '@/components/messenger/UserProfileModal';
@@ -20,7 +21,9 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [profileUser, setProfileUser] = useState<User | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<{ url: string; type: 'image' | 'video'; file: File } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const chat = chats.find((c) => c.id === activeChat);
   const other = chat?.type === 'direct'
@@ -32,12 +35,38 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const type = file.type.startsWith('video') ? 'video' : 'image';
+    const url = URL.createObjectURL(file);
+    setMediaPreview({ url, type, file });
+    e.target.value = '';
+  };
+
   const handleSend = async () => {
-    if (!text.trim() || !activeChat || !currentUser || sending) return;
+    if ((!text.trim() && !mediaPreview) || !activeChat || !currentUser || sending) return;
     const msg = text.trim();
     setText('');
     setSending(true);
-    await sendMessage(activeChat, currentUser.id, msg);
+
+    let mediaUrl: string | undefined;
+    let mediaType: string | undefined;
+
+    if (mediaPreview) {
+      const file = mediaPreview.file;
+      const b64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      const res = await api.chats.uploadMedia(currentUser.id, b64, file.type);
+      mediaUrl = res.media_url;
+      mediaType = res.media_type;
+      setMediaPreview(null);
+    }
+
+    await sendMessage(activeChat, currentUser.id, msg, mediaUrl, mediaType);
     setSending(false);
   };
 
@@ -141,12 +170,30 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
                 {showName && !sameAsPrev && (
                   <span className="text-[11px] text-[hsl(var(--muted-foreground))] mb-1 px-1">{sender?.displayName}</span>
                 )}
-                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
+                <div className={`rounded-2xl overflow-hidden text-sm leading-relaxed
                   ${isMe
                     ? 'bg-[hsl(var(--primary))] text-white rounded-br-sm'
                     : 'bg-white text-[hsl(var(--foreground))] rounded-bl-sm shadow-sm border border-[hsl(var(--border))]'
                   }`}>
-                  {msg.text}
+                  {msg.mediaUrl && msg.mediaType === 'image' && (
+                    <img
+                      src={msg.mediaUrl}
+                      alt="фото"
+                      className="max-w-full rounded-t-2xl block"
+                      style={{ maxHeight: 280 }}
+                    />
+                  )}
+                  {msg.mediaUrl && msg.mediaType === 'video' && (
+                    <video
+                      src={msg.mediaUrl}
+                      controls
+                      className="max-w-full rounded-t-2xl block"
+                      style={{ maxHeight: 280 }}
+                    />
+                  )}
+                  {msg.text && (
+                    <p className="px-4 py-2.5">{msg.text}</p>
+                  )}
                 </div>
                 <span className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 px-1 flex items-center gap-1">
                   {formatMsgTime(msg.createdAt)}
@@ -165,10 +212,39 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Превью медиа */}
+      {mediaPreview && (
+        <div className="px-4 pb-2 bg-white border-t border-[hsl(var(--border))]">
+          <div className="relative inline-block mt-2">
+            {mediaPreview.type === 'image' ? (
+              <img src={mediaPreview.url} alt="превью" className="h-20 rounded-xl object-cover" />
+            ) : (
+              <video src={mediaPreview.url} className="h-20 rounded-xl" />
+            )}
+            <button
+              onClick={() => setMediaPreview(null)}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center"
+            >
+              <Icon name="X" size={10} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Поле ввода */}
       <div className="px-4 py-3 pb-24 md:pb-3 border-t border-[hsl(var(--border))] bg-white">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
         <div className="flex items-end gap-2">
-          <button className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors flex-shrink-0">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-9 h-9 rounded-xl hover:bg-[hsl(var(--secondary))] flex items-center justify-center transition-colors flex-shrink-0"
+          >
             <Icon name="Paperclip" size={18} className="text-[hsl(var(--muted-foreground))]" />
           </button>
           <div className="flex-1 relative">
@@ -184,7 +260,7 @@ export default function ChatWindow({ onBack }: ChatWindowProps) {
           </div>
           <button
             onClick={handleSend}
-            disabled={!text.trim() || sending}
+            disabled={(!text.trim() && !mediaPreview) || sending}
             className="w-9 h-9 rounded-xl bg-[hsl(var(--primary))] hover:opacity-90 flex items-center justify-center transition-all duration-150 flex-shrink-0 disabled:opacity-30 hover:shadow-md hover:shadow-orange-500/25"
           >
             {sending

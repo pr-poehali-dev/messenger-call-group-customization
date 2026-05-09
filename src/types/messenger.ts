@@ -16,6 +16,8 @@ export interface Message {
   text: string;
   createdAt: string;
   isRead: boolean;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
 }
 
 export interface Chat {

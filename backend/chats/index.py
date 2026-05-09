@@ -1,13 +1,24 @@
 import json
 import os
+import base64
+import uuid
 import psycopg2
+import boto3
 
 
 def get_db():
     return psycopg2.connect(os.environ['DATABASE_URL'])
 
+def get_s3():
+    return boto3.client(
+        's3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    )
+
 def handler(event: dict, context) -> dict:
-    """Чаты и сообщения: получить список, историю, отправить сообщение"""
+    """Чаты и сообщения: получить список, историю, отправить сообщение, загрузить медиа"""
     cors = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type'}
 
     if event.get('httpMethod') == 'OPTIONS':
@@ -50,21 +61,40 @@ def handler(event: dict, context) -> dict:
     if action == 'get_messages':
         chat_id = int(body['chat_id'])
         limit = int(body.get('limit', 50))
-        cur.execute('SELECT id, chat_id, sender_id, text, is_read, created_at FROM messages WHERE chat_id = %s ORDER BY created_at ASC LIMIT %s', (chat_id, limit))
+        cur.execute('SELECT id, chat_id, sender_id, text, is_read, created_at, media_url, media_type FROM messages WHERE chat_id = %s ORDER BY created_at ASC LIMIT %s', (chat_id, limit))
         rows = cur.fetchall()
-        msgs = [{'id': str(r[0]), 'chatId': str(r[1]), 'senderId': str(r[2]) if r[2] else '', 'text': r[3], 'isRead': r[4], 'createdAt': r[5].isoformat()} for r in rows]
+        msgs = [{'id': str(r[0]), 'chatId': str(r[1]), 'senderId': str(r[2]) if r[2] else '', 'text': r[3] or '', 'isRead': r[4], 'createdAt': r[5].isoformat(), 'mediaUrl': r[6], 'mediaType': r[7]} for r in rows]
         conn.close()
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'messages': msgs})}
 
     if action == 'send_message':
         chat_id = int(body['chat_id'])
         sender_id = int(body['sender_id'])
-        text = body['text'].strip()
-        cur.execute('INSERT INTO messages (chat_id, sender_id, text) VALUES (%s, %s, %s) RETURNING id, created_at', (chat_id, sender_id, text))
+        text = (body.get('text') or '').strip()
+        media_url = body.get('media_url')
+        media_type = body.get('media_type')
+        cur.execute(
+            'INSERT INTO messages (chat_id, sender_id, text, media_url, media_type) VALUES (%s, %s, %s, %s, %s) RETURNING id, created_at',
+            (chat_id, sender_id, text, media_url, media_type)
+        )
         row = cur.fetchone()
         conn.commit()
         conn.close()
-        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'message': {'id': str(row[0]), 'chatId': str(chat_id), 'senderId': str(sender_id), 'text': text, 'isRead': False, 'createdAt': row[1].isoformat()}})}
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'message': {'id': str(row[0]), 'chatId': str(chat_id), 'senderId': str(sender_id), 'text': text, 'isRead': False, 'createdAt': row[1].isoformat(), 'mediaUrl': media_url, 'mediaType': media_type}})}
+
+    if action == 'upload_media':
+        sender_id = body['sender_id']
+        file_b64 = body['file_b64']
+        content_type = body['content_type']
+        ext = content_type.split('/')[-1].split(';')[0]
+        key = f'chat-media/{sender_id}/{uuid.uuid4()}.{ext}'
+        data = base64.b64decode(file_b64)
+        s3 = get_s3()
+        s3.put_object(Bucket='files', Key=key, Body=data, ContentType=content_type)
+        cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
+        media_type = 'video' if content_type.startswith('video') else 'image'
+        conn.close()
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'media_url': cdn_url, 'media_type': media_type})}
 
     if action == 'create_chat':
         user_id = int(body['user_id'])
@@ -85,6 +115,14 @@ def handler(event: dict, context) -> dict:
         conn.commit()
         conn.close()
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'chat_id': str(chat_id)})}
+
+    if action == 'mark_read':
+        chat_id = int(body['chat_id'])
+        user_id = int(body['user_id'])
+        cur.execute('UPDATE messages SET is_read = true WHERE chat_id = %s AND sender_id != %s', (chat_id, user_id))
+        conn.commit()
+        conn.close()
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'ok': True})}
 
     conn.close()
     return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'Unknown action'})}

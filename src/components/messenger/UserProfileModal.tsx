@@ -51,27 +51,13 @@ export default function UserProfileModal({ user, onClose }: UserProfileModalProp
             </div>
           )}
 
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] flex items-center justify-center flex-shrink-0">
-                <Icon name="AtSign" size={15} className="text-[hsl(var(--muted-foreground))]" />
-              </div>
-              <div>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">Username</p>
-                <p className="text-sm font-medium text-[hsl(var(--foreground))]">@{user.username}</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] flex items-center justify-center flex-shrink-0">
+              <Icon name="AtSign" size={15} className="text-[hsl(var(--muted-foreground))]" />
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(var(--secondary))] flex items-center justify-center flex-shrink-0">
-                <Icon name="Circle" size={15} className={user.isOnline ? 'text-[hsl(var(--online))]' : 'text-[hsl(var(--muted-foreground))]'} />
-              </div>
-              <div>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">Статус</p>
-                <p className="text-sm font-medium text-[hsl(var(--foreground))]">
-                  {user.isOnline ? 'В сети' : user.lastSeen || 'Не в сети'}
-                </p>
-              </div>
+            <div>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Username</p>
+              <p className="text-sm font-medium text-[hsl(var(--foreground))]">@{user.username}</p>
             </div>
           </div>
         </div>

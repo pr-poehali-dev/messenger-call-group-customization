@@ -12,7 +12,7 @@ interface MessengerStore {
   setActiveChat: (id: string | null) => void;
   loadChats: (userId: string) => Promise<void>;
   loadMessages: (chatId: string) => Promise<void>;
-  sendMessage: (chatId: string, senderId: string, text: string) => Promise<void>;
+  sendMessage: (chatId: string, senderId: string, text: string, mediaUrl?: string, mediaType?: string) => Promise<void>;
   loadCalls: (userId: string) => Promise<void>;
 }
 
@@ -66,8 +66,8 @@ export const useMessengerStore = create<MessengerStore>((set, get) => ({
     }));
   },
 
-  sendMessage: async (chatId, senderId, text) => {
-    const data = await api.chats.sendMessage(chatId, senderId, text);
+  sendMessage: async (chatId, senderId, text, mediaUrl?, mediaType?) => {
+    const data = await api.chats.sendMessage(chatId, senderId, text, mediaUrl, mediaType);
     const newMsg: Message = data.message;
     set((state) => ({
       messagesMap: {
